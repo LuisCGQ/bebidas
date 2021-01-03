@@ -1,6 +1,73 @@
-import React from "react";
+import React, { useContext, useState } from "react";
+import { ModalContext } from "../context/ModalContext";
+import Modal from "@material-ui/core/Modal";
+import { makeStyles } from "@material-ui/core/styles";
+
+function getModalStyle() {
+  const top = 50;
+  const left = 50;
+
+  return {
+    top: `${top}%`,
+    left: `${left}%`,
+    transform: `translate(-${top}%, -${left}%)`,
+  };
+}
+
+const useStyles = makeStyles((theme) => ({
+  paper: {
+    position: "absolute",
+    [theme.breakpoints.down("sm")]: {
+      width: "100%",
+    },
+    [theme.breakpoints.up("sm")]: {
+      width: 450,
+    },
+    maxHeight: 700,
+    overflowY: "auto",
+    backgroundColor: theme.palette.background.paper,
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2, 4, 3),
+  },
+}));
 
 const Receta = ({ receta }) => {
+  //Configuración del modal de material-ui
+  const [modalStyle] = useState(getModalStyle);
+  const [open, setOpen] = useState(false);
+
+  const classes = useStyles();
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  //extraer valores del context
+  const { guardarIdReceta, informacion, guardarReceta } = useContext(
+    ModalContext
+  );
+
+  //Muestra y formatea los ingredientes
+  const mostrarIngredientes = (infromacion) => {
+    let ingredientes = [];
+    for (let i = 1; i < 16; i++) {
+      if (informacion[`strIngredient${i}`]) {
+        ingredientes.push(
+          <li>
+            {informacion[`strIngredient${i}`]} {informacion[`strMeasure${i}`]}
+          </li>
+        );
+      } else {
+        return ingredientes;
+      }
+    }
+    return ingredientes;
+  };
+
   return (
     <div className="col-md-4 mb-3">
       <div className="card">
@@ -13,7 +80,36 @@ const Receta = ({ receta }) => {
         />
 
         <div className="card-body">
-          <button className="btn btn-block btn-primary">Ver Receta</button>
+          <button
+            onClick={() => {
+              guardarIdReceta(receta.idDrink);
+              handleOpen();
+            }}
+            className="btn btn-block btn-primary"
+          >
+            Ver Receta
+          </button>
+          <Modal
+            open={open}
+            onClose={() => {
+              guardarIdReceta(null);
+              guardarReceta({});
+              handleClose();
+            }}
+          >
+            <div style={modalStyle} className={classes.paper}>
+              <h2>{informacion.strDrink}</h2>
+              <h3 className="mt-4">Instrucciones</h3>
+              <p>{informacion.strInstructions}</p>
+              <img
+                src={informacion.strDrinkThumb}
+                alt=""
+                className="img-fluid my-4"
+              />
+              <h3>Ingredientes y Cantidades</h3>
+              <ul>{mostrarIngredientes(informacion)}</ul>
+            </div>
+          </Modal>
         </div>
       </div>
     </div>
